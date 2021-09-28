@@ -1338,24 +1338,32 @@ Map.prototype.addMarker = function(markerOptions, callback) {
   //------------------------------------
   markerOptions.icon = markerOptions.icon || {};
   var link;
-  if (typeof markerOptions.icon === 'string') {
-    if (markerOptions.icon.indexOf('://') === -1 &&
-        markerOptions.icon.indexOf('.') === 0) {
-
-      link = document.createElement('a');
-      link.href = markerOptions.icon;
-      markerOptions.icon = link.protocol+'//'+link.host+link.pathname + link.search;
-      link = undefined;
-    }
-  } else if (typeof markerOptions.icon === 'object' && typeof markerOptions.icon.url === 'string') {
-    if (markerOptions.icon.url.indexOf('://') === -1 &&
-        markerOptions.icon.url.indexOf('.') === 0) {
-
-      link = document.createElement('a');
-      link.href = markerOptions.icon.url;
-      markerOptions.icon.url = link.protocol+'//'+link.host+link.pathname + link.search;
-      link = undefined;
-    }
+  const isBase64Marker = typeof markerOptions.icon === 'string';
+  if (isBase64Marker) {
+      if (
+          markerOptions.icon.indexOf('://') === -1 &&
+          markerOptions.icon.indexOf('.') === 0
+      ) {
+          link = document.createElement('a');
+          link.href = markerOptions.icon;
+          markerOptions.icon =
+              link.protocol + '//' + link.host + link.pathname + link.search;
+          link = undefined;
+      }
+  } else if (
+      typeof markerOptions.icon === 'object' &&
+      typeof markerOptions.icon.url === 'string'
+  ) {
+      if (
+          markerOptions.icon.url.indexOf('://') === -1 &&
+          markerOptions.icon.url.indexOf('.') === 0
+      ) {
+          link = document.createElement('a');
+          link.href = markerOptions.icon.url;
+          markerOptions.icon.url =
+              link.protocol + '//' + link.host + link.pathname + link.search;
+          link = undefined;
+      }
   }
 
   var marker = new Marker(self, markerOptions, exec);
@@ -1377,13 +1385,15 @@ Map.prototype.addMarker = function(markerOptions, callback) {
 
   self.exec.call(self, function(result) {
     if (marker) {
-      markerOptions.icon.size = markerOptions.icon.size || {};
-      markerOptions.icon.size.width = markerOptions.icon.size.width || result.width;
-      markerOptions.icon.size.height = markerOptions.icon.size.height || result.height;
-      markerOptions.icon.anchor = markerOptions.icon.anchor || [markerOptions.icon.size.width / 2, markerOptions.icon.size.height];
+      if (!isBase64Marker) {
+        markerOptions.icon.size = markerOptions.icon.size || {};
+        markerOptions.icon.size.width = markerOptions.icon.size.width || result.width;
+        markerOptions.icon.size.height = markerOptions.icon.size.height || result.height;
+        markerOptions.icon.anchor = markerOptions.icon.anchor || [markerOptions.icon.size.width / 2, markerOptions.icon.size.height];
+      }
 
       if (!markerOptions.infoWindowAnchor) {
-        markerOptions.infoWindowAnchor = [markerOptions.icon.size.width / 2, 0];
+        markerOptions.infoWindowAnchor = [isBase64Marker ? result.width: markerOptions.icon.size.width / 2, 0];
       }
       marker._privateInitialize(markerOptions);
       delete marker._privateInitialize;
